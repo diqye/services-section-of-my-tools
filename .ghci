@@ -1,0 +1,4 @@
+:set prompt "diqye> "
+:set +t
+:set +s
+:set -XOverloadedStrings
