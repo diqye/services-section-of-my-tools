@@ -17,6 +17,10 @@ import Endpoint.Finance.Input(inputRoutes)
 import Kit(evalInnerState,forkInRight)
 import Control.Concurrent.Chan(Chan,newChan,dupChan,readChan)
 import I.ChannelMessage(ChannelMessage)
+import I.ChatInfo(SystemMessage)
+import Control.Concurrent.Async(async,cancel,wait)
+import Control.Exception(catch,SomeException,try)
+import qualified Endpoint.Message as EM
 
 version = "Version 1.0"
 port = 8899
@@ -29,17 +33,24 @@ main = do
 
 
 httpServe = do
+  chatChannel <- newChan
   channel <- newChan
-  forkInRight
-    (forever $ readChan channel)
-    (W.runSettings setting $ W.toApplication $ webapp channel)
+  chatAsync <- async $ EM.chatHeadquarters chatChannel
+  r <- try $ W.runSettings setting $ W.toApplication $ webapp (channel,chatChannel)
+  case r of
+    (Left e) -> $err' $ "httpServe" ++ displayException (e :: SomeException)
+    (Right _) -> pure ()
+  -- 释放线程资源
+  cancel chatAsync
 
-webapp :: Chan ChannelMessage -> W.AppIO
-webapp channel = do
+
+webapp :: (Chan ChannelMessage,Chan SystemMessage) -> W.AppIO
+webapp (channel,chatChannel) = do
   W.appmsum 
     [ logForDebug
     , W.consum "files" >>  myFiles
     , W.consum "input" >> evalInnerState channel inputRoutes
+    , W.consum "chat" >> evalInnerState chatChannel EM.routes
     , W.respLBS W.status200 "ok"
     ]
 

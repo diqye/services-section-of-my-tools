@@ -9,6 +9,11 @@ import Control.Concurrent.Async(withAsync)
 import Control.Exception(throwIO,handle)
 import Control.Monad(forever)
 import Data.Text(Text)
+
+-- 1s
+oneSec :: Int
+oneSec = 1000000
+oneMinute = oneSec * 60
 -- import Control.Monad.State.Lazy(StateT,runStateT)
 -- UTC转时间戳，精确到毫秒
 mkTimestamp :: UTCTime -> Integer
@@ -57,6 +62,7 @@ forkInRight :: IO a -> IO b -> IO b
 forkInRight action1 action2 = withAsync action1 (const action2)
 
 
+
 keepWebsocket 
   :: W.Connection
   -> IO Bool
@@ -76,7 +82,7 @@ keepWebsocket
       ignore `handle` forever repeatAction
   else do
     W.sendClose conn ("Unauthorized"::Text)
-    -- 忽略飞行消息
+    -- 验证失败忽略飞行消息
     pure ()
   where ignore :: W.ConnectionException -> IO ()
         ignore (W.CloseRequest code reson) = pure ()

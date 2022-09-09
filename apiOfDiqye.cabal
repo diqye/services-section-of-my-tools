@@ -25,9 +25,11 @@ source-repository head
 library
   exposed-modules:
       Endpoint.Finance.Input
+      Endpoint.Message
       Endpoint.Static.MyFile
       Finance.Candle
       I.ChannelMessage
+      I.ChatInfo
       Kit
       Module.FreeJSON
       Module.Log
