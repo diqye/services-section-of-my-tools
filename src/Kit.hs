@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Kit where
 
 import Data.Time as T

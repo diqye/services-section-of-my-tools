@@ -18,6 +18,8 @@ import qualified I.ChatInfo as Chat
 import Control.Concurrent.Async
 import Data.IORef
 import qualified Data.List as List
+import qualified Data.ByteString.Lazy as BL
+import System.Directory(doesFileExist)
 
 
 routes :: W.AppT (W.StateT (Chan Chat.SystemMessage) IO) W.Application
@@ -25,8 +27,28 @@ routes = W.appmsum
   [ W.consum "channel" >> channelApp
   ]
 
+filePath = "./chatInfos.json"
+
+initChatInfos ref = do
+  existed <- doesFileExist filePath
+  when existed $ do
+    $info' $ "Reading file form path " ++ filePath
+    json <- BL.readFile filePath
+    let infos = maybe [] id $ A.decode json
+    writeIORef ref infos
+
+alarmAfter12hours ref = do
+  threadDelay (1000000 * 60 * 60 * 12)
+  $info' $ "Writing file to " ++ filePath
+  infos <- readIORef ref 
+  BL.writeFile filePath $ A.encode infos
+
 chatHeadquarters chatChannel = do
   chatInfosRef <- newIORef []
+  -- 初始化数据
+  initChatInfos chatInfosRef
+  -- 定时保存数据
+  timer <- async $ forever $ alarmAfter12hours chatInfosRef
   liveCheck <- async $ forever $ do
     threadDelay (oneSec * 60)
     time <- Kit.getCurrentTime
@@ -41,6 +63,7 @@ chatHeadquarters chatChannel = do
         handle' `handle` action
         where handle' e = do
                 cancel liveCheck
+                cancel timer
                 $err' $ show (e :: SomeException)
   handException $ forever $ do
     a <- readChan chatChannel

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Endpoint.Static.MyFile where
 
 -- 若欲知某处预期类型，_ 之,    _ 者虫洞也，以其代之得类型于编译期
@@ -20,7 +21,7 @@ myFiles = authLogic
   <|> myBrowse
 
 --  静态文件服务文件夹，绝对路径 
-shareFolder = "/Users"
+shareFolder = "/root/share_folder"
 
 -- 路径见 private 则 auth 之
 authLogic = do

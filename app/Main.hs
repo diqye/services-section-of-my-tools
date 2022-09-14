@@ -30,6 +30,7 @@ main = do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
   $info' version
+  httpServe
 
 
 httpServe = do
