@@ -13,14 +13,14 @@ import Control.Exception(displayException)
 import Control.Monad(when,forever)
 import Control.Applicative(empty)
 import Control.Monad.IO.Class(liftIO)
-import Endpoint.Finance.Input(inputRoutes)
-import Kit(evalInnerState,forkInRight)
+import Kit(evalInnerState)
 import Control.Concurrent.Chan(Chan,newChan,dupChan,readChan)
-import I.ChannelMessage(ChannelMessage)
+import I.FinanceMessage(Message)
 import I.ChatInfo(SystemMessage)
 import Control.Concurrent.Async(async,cancel,wait)
 import Control.Exception(catch,SomeException,try)
 import qualified Endpoint.Message as EM
+import qualified Endpoint.Finance.Input as FI
 
 version = "Version 1.0"
 port = 8899
@@ -37,20 +37,22 @@ httpServe = do
   chatChannel <- newChan
   channel <- newChan
   chatAsync <- async $ EM.chatHeadquarters chatChannel
+  inputAsync <- async $ FI.headquarters channel
   r <- try $ W.runSettings setting $ W.toApplication $ webapp (channel,chatChannel)
   case r of
     (Left e) -> $err' $ "httpServe" ++ displayException (e :: SomeException)
     (Right _) -> pure ()
   -- 释放线程资源
   cancel chatAsync
+  cancel inputAsync
 
 
-webapp :: (Chan ChannelMessage,Chan SystemMessage) -> W.AppIO
+webapp :: (Chan Message,Chan SystemMessage) -> W.AppIO
 webapp (channel,chatChannel) = do
   W.appmsum 
     [ logForDebug
     , W.consum "files" >>  myFiles
-    , W.consum "input" >> evalInnerState channel inputRoutes
+    , W.consum "input" >> evalInnerState channel FI.inputRoutes
     , W.consum "chat" >> evalInnerState chatChannel EM.routes
     , W.respLBS W.status200 "ok"
     ]

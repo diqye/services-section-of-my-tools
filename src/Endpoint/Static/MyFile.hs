@@ -10,6 +10,8 @@ import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Module.TemplateGetter
 import Control.Monad(guard)
+import System.IO.Unsafe(unsafePerformIO)
+import System.Directory(getHomeDirectory)
 
 -- 静态文件服务
 -- 于文件，见 private 则 auth 之
@@ -21,7 +23,9 @@ myFiles = authLogic
   <|> myBrowse
 
 --  静态文件服务文件夹，绝对路径 
-shareFolder = "/root/share_folder"
+shareFolder = unsafePerformIO $ do
+  home <- getHomeDirectory
+  return $ home ++ "/share_folder"
 
 -- 路径见 private 则 auth 之
 authLogic = do
@@ -38,7 +42,7 @@ myBrowse = do
   req <- W.getRequest
   let infos = W.pathInfo req
   let lastText = if null infos then "null" else last infos
-  -- 善哉！IF表达式之竟能排版如此。
+  -- 善！IF表达式之竟能排版如此。
   if lastText == ""
   then Static.dirBrowse shareFolder
   else do

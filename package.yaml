@@ -54,7 +54,8 @@ dependencies:
 - process
 - template-haskell
 - data-default-class
-
+- uuid-types
+- random
 
 library:
   source-dirs: src

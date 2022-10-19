@@ -1,8 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 503bb4ab3369a7bbc04c2446137a23e064cc30cf87c78fd7ededaac5ebe68ee5
 
 name:           apiOfDiqye
 version:        0.1.0.0
@@ -28,11 +30,12 @@ library
       Endpoint.Message
       Endpoint.Static.MyFile
       Finance.Candle
-      I.ChannelMessage
       I.ChatInfo
+      I.FinanceMessage
       Kit
       Module.FreeJSON
       Module.Log
+      Module.Request
       Module.TemplateGetter
   other-modules:
       Paths_apiOfDiqye
@@ -61,6 +64,7 @@ library
     , network
     , parsec
     , process
+    , random
     , raw-strings-qq
     , scientific
     , string-conversions
@@ -69,6 +73,7 @@ library
     , time
     , transformers
     , unordered-containers
+    , uuid-types
     , wai
     , websockets
     , yaml
@@ -105,6 +110,7 @@ executable apiOfDiqye-exe
     , network
     , parsec
     , process
+    , random
     , raw-strings-qq
     , scientific
     , string-conversions
@@ -113,6 +119,7 @@ executable apiOfDiqye-exe
     , time
     , transformers
     , unordered-containers
+    , uuid-types
     , wai
     , websockets
     , yaml
@@ -150,6 +157,7 @@ test-suite apiOfDiqye-test
     , network
     , parsec
     , process
+    , random
     , raw-strings-qq
     , scientific
     , string-conversions
@@ -158,6 +166,7 @@ test-suite apiOfDiqye-test
     , time
     , transformers
     , unordered-containers
+    , uuid-types
     , wai
     , websockets
     , yaml

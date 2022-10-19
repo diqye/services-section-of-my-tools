@@ -28,9 +28,9 @@ hInfo loc level str = liftIO $ do
   let zone = cstZone
   let time = Time.utcToLocalTime zone utc
   let (prefix,handle) = case level of
-        LogErr -> ("err",stdout)
+        LogErr -> ("err",stderr)
         LogTrace -> ("trace",stdout)
-        LogInfo -> ("info",stderr)
+        LogInfo -> ("info",stdout)
   hPutStrLn handle $ (prefn loc prefix (formatTime defaultTimeLocale ("[%Y-%m-%d %H:%M:%S]") time) <> str)
   where prefn Nothing prefix time = "[" <> prefix <> "]" <> time
         prefn (Just (Loc{loc_module=mod,loc_start=start})) prefix time = "[" <> prefix <> "]"<>time<>"[" <> mod <> show start <> "]"

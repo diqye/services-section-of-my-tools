@@ -123,7 +123,6 @@ instance TupleGetter (a,b) a b () () where
   set_3 v = over_3 (const v)
   set_4 v = over_4 (const v)
 
-
   -- tuple5
 instance TupleGetter (a,b,c,d,e) a b c d where
   _1 (a,b,c,d,e) = a

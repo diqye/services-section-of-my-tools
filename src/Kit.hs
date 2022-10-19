@@ -59,32 +59,4 @@ evalInnerState s app = do
 getInnerState :: Monad m => W.AppT (W.StateT s m) s
 getInnerState = W.lift $ W.lift $ W.get
 
-forkInRight :: IO a -> IO b -> IO b
-forkInRight action1 action2 = withAsync action1 (const action2)
 
-
-
-keepWebsocket 
-  :: W.Connection
-  -> IO Bool
-  -> IO ()
-  -> IO ()
-  -> IO ()
-keepWebsocket 
-  conn
-  firstAction
-  heartAction
-  repeatAction
-  = do
-  doContinue <- firstAction
-  if doContinue
-  then do
-    W.withPingThread conn 30 heartAction $ do -- ping/30s,并在repeatAction结束(异常)后友好的杀死Ping线程。
-      ignore `handle` forever repeatAction
-  else do
-    W.sendClose conn ("Unauthorized"::Text)
-    -- 验证失败忽略飞行消息
-    pure ()
-  where ignore :: W.ConnectionException -> IO ()
-        ignore (W.CloseRequest code reson) = pure ()
-        ignore e = throwIO e

@@ -2,7 +2,7 @@
 module Endpoint.Message where
 import qualified Web.AppM as W
 import qualified Data.Aeson as A
-import Kit(oneSec,respJSON,getInnerState,forkInRight,keepWebsocket)
+import Kit(oneSec,respJSON,getInnerState)
 import qualified Kit as Kit
 import Control.Monad.IO.Class(liftIO,MonadIO)
 import qualified Web.WebSocket.WebSocket as W
@@ -12,7 +12,6 @@ import Control.Monad(guard,forever,when,Monad,forM,forM_)
 import Data.Text(Text,unpack)
 import Control.Concurrent(threadDelay,forkIO)
 import Control.Exception(Exception,throwIO,handle,SomeException)
-import I.ChannelMessage(ChannelMessage(Live,Message))
 import Control.Concurrent.Chan(Chan,writeChan,readChan,dupChan)
 import qualified I.ChatInfo as Chat
 import Control.Concurrent.Async
@@ -145,15 +144,16 @@ channelApp = do
       Right _ -> W.sendClose conn ("Timeout"::Text)
       Left (Left _) -> W.sendClose conn ("Illege name"::Text)
       Left (Right info) -> do
+        $trace' $ "Connected by " ++ unpack (fst clientId) ++ "/" ++ unpack (snd clientId)
         W.sendTextData conn $ A.encode (Chat.CInitialInfo info)
         let heart = pingSysem channel clientId
         -- Ping/30s,浏览器Websocket会自动回应Pong消息，客户端无需code
         W.withPingThread conn 30 heart $ do
           let controlException (W.CloseRequest code reson) = do
-                $trace' $ show ("CloseRequest",code,reson) 
+                -- $trace' $ show ("CloseRequest",code,reson) 
                 writeChan channel $ Chat.Offline clientId "CloseRequest Exception"
               controlException W.ConnectionClosed = do
-                $trace' "ConnectionClosed"
+                -- $trace' "ConnectionClosed"
                 writeChan channel $ Chat.Offline clientId "ConnectionClosed"
               controlException e = do
                 $err' $ show e
