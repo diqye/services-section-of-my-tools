@@ -2,6 +2,7 @@
 module Endpoint.Finance.Input where
 -- | Space + 0 静音 - 减音 + 增音  
 import qualified Web.AppM as W
+import System.Directory(doesFileExist)
 import qualified Data.Aeson as A
 import Data.Word
 import Kit(oneSec,respJSON,getInnerState)
@@ -25,19 +26,24 @@ import qualified Data.HashMap.Strict as M
 import Data.List(find)
 import qualified Module.Request as MR
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString as B
 import Module.TemplateGetter
+import qualified Data.Binary as Bin
+import Data.String.Conversions(cs)
 
 headquarters :: Chan IF.Message -> IO ()
 headquarters channel = do
   ref <- newIORef IF.emptyQuatas
   eventRef <- newIORef []
+  readEvents eventRef
   handException $ forever $ do
     a <- readChan channel
     messageHandle a channel (ref,eventRef::IORef [(Word8,Text,Float,IF.Direction)])
   where handException action = do
           handle' `handle` action
         handle' e = do
-          $err' $ show (e::SomeException)
+          let id' = id (e::SomeException)
+          pure ()
 
 messageHandle (uuid,IF.SVerify token) chan (ref,eRef) = do
   if token == "098765"
@@ -55,7 +61,7 @@ messageHandle (uuid,IF.SNewTicks quotas) chan (ref,eRef) = do
     Nothing -> pure ()
     Just quotas' -> do
       writeIORef ref quotas'
-      writeChan chan $ (uuid,IF.SSendTicks quotas')
+      writeChan chan $ (uuid,IF.SSendTicks quotas)
       -- 判断是否触发价格提醒
       triggerRemid uuid quotas chan eRef
 messageHandle (uuid,IF.SDelQuotaEvent id) chan (ref,eRef) = do
@@ -64,7 +70,7 @@ messageHandle (uuid,IF.SDelQuotaEvent id) chan (ref,eRef) = do
     (_,code,_,_) <- W.MaybeT $ pure $ find (\(id',_,_,_)->id' == id) $ events
     let nEvents = filter (\(id',_,_,_)->id' /= id) $ events
     liftIO $ do
-      writeIORef eRef $ nEvents
+      writeEvents eRef $ nEvents
       writeChan chan (uuid,IF.SSendQuotaEvent id code (-1))
   pure ()
 messageHandle (uuid,IF.SNewQuotaEvent code price) chan (ref,eRef) = do
@@ -74,7 +80,7 @@ messageHandle (uuid,IF.SNewQuotaEvent code price) chan (ref,eRef) = do
     (realPrice,_) <- W.MaybeT $ pure $  M.lookup code squotas
     let dir = if realPrice > price then IF.Shrink else IF.Grow
     let id = (+1) $ foldl (\b a -> max b (_1 a)) (0::Word8) events
-    liftIO $ writeIORef eRef $ (id,code,price,dir):events
+    liftIO $ writeEvents eRef $ (id,code,price,dir):events
     liftIO $ writeChan chan (uuid,IF.SSendQuotaEvent id code price)
   pure ()
 
@@ -84,14 +90,27 @@ triggerRemid uuid quotas chan eRef = do
   let keys = M.keys quotas
   forM_ keys $ \ key -> W.runMaybeT $ do
     events <- liftIO $ readIORef eRef
-    (id,code,targetPrice,dir) <- W.MaybeT $ pure $ find (\(_,a,_,_)->a==key) events
+    -- let (id,code,targetPrice,dir) = filter (\->_2 a==key) events
+    let es = filter (\a->_2 a==key) events
     let (price,percentage) = quotas M.! key
-    let isTri = if dir == IF.Grow then price > targetPrice else price < targetPrice
-    guard isTri
-    liftIO $ do
-      writeIORef eRef $ filter (\(id',_,_,_)->id' /= id) events
-      writeChan chan (uuid,IF.SSendQuotaEvent id code 0)
-      async $ remidAction $ IF.remidStr code targetPrice price dir 
+    forM_ es $ \ (id,code,targetPrice,dir) -> liftIO $ do
+      let isTri = if dir == IF.Grow then price > targetPrice else price < targetPrice
+      when isTri $ do
+        writeEvents eRef $ filter ((/= id)._1) events
+        writeChan chan (uuid,IF.SSendQuotaEvent id code 0)
+        async $ remidAction $ IF.remidStr code targetPrice price dir 
+        pure ()
+
+binfilepath = "event.bindata"
+readEvents eRef = do
+  existed <- doesFileExist binfilepath
+  when existed $ do
+    binary <- B.readFile binfilepath
+    writeIORef eRef $ Bin.decode $ cs $ binary
+writeEvents eRef events = do
+  writeIORef eRef events
+  let binary = Bin.encode events
+  BL.writeFile binfilepath binary
 
 remidAction :: Text -> IO ()
 remidAction text = do

@@ -11,6 +11,7 @@ import System.IO
 import Debug.Trace(traceM)
 import Data.Data(Data)
 import Language.Haskell.TH.Syntax(liftData,liftString)
+-- import Data.IORef
 
 data LogLevel = LogErr | LogInfo | LogTrace
   deriving (Show,Data)

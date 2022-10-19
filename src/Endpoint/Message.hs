@@ -60,10 +60,10 @@ chatHeadquarters chatChannel = do
         else pure ()
   let handException action = do
         handle' `handle` action
-        where handle' e = do
+        where handle' :: SomeException -> IO ()
+              handle' e = do
                 cancel liveCheck
                 cancel timer
-                $err' $ show (e :: SomeException)
   handException $ forever $ do
     a <- readChan chatChannel
     case a of

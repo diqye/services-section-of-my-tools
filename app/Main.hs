@@ -65,7 +65,7 @@ logForDebug = do
 
 -- 非错误不与输出
 logException req someException = do
-  when (W.defaultShouldDisplayException someException) $ do
+  when (W.defaultShouldDisplayException someException == False) $ do
     $err' $ displayException someException
 
 setting = W.setPort port
@@ -73,6 +73,7 @@ setting = W.setPort port
   $ W.setHost "*"
   $ W.setOnException logException
   -- defaultOnExceptionResponse
-  $ W.setOnExceptionResponse W.exceptionResponseForDebug
+  -- exceptionResponseForDebug 
+  $ W.setOnExceptionResponse W.defaultOnExceptionResponse
   -- $ W.setTimeout (30*60*60) -- Seconds
   $ W.defaultSettings

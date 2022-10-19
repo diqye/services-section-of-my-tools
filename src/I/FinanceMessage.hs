@@ -8,11 +8,13 @@ import Data.UUID.Types(UUID)
 import qualified Data.HashMap.Strict as M
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Binary.Put as Bin
+import qualified Data.Binary as Bin
 import Control.Monad(forM_,guard)
 import Data.Word
 import Text.Printf(printf)
 import Data.List(find)
 import Data.String.Conversions(cs)
+import GHC.Generics
 
 type Quotas = M.HashMap Text (Float,Float)
 data ClientMessage = Init Quotas
@@ -36,7 +38,8 @@ data MessageServer = SVerify Token
 
 type Message = (UUID,MessageServer)
 
-data Direction = Grow | Shrink deriving (Eq,Show)
+data Direction = Grow | Shrink deriving (Generic,Eq,Show)
+instance Bin.Binary Direction
 emptyQuatas = M.empty :: M.HashMap Text (Float,Float)
 -- | 合并两个Map，如果没有差异返回Nothing
 merge :: Quotas -> Quotas -> Maybe Quotas
