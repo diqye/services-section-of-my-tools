@@ -137,3 +137,17 @@ instance TupleGetter (a,b,c,d,e) a b c d where
   set_2 v = over_2 (const v)
   set_3 v = over_3 (const v)
   set_4 v = over_4 (const v)
+  -- tuple6
+instance TupleGetter (a,b,c,d,e,f) a b c d  where
+  _1 (a,b,c,d,e,f) = a
+  _2 (a,b,c,d,e,f) = b
+  _3 (a,b,c,d,e,f) = c
+  _4 (a,b,c,d,e,f) = d
+  over_1 fn (a,b,c,d,e,f) = (fn a,b,c,d,e,f)
+  over_2 fn (a,b,c,d,e,f) = (a,fn b,c,d,e,f)
+  over_3 fn (a,b,c,d,e,f) = (a,b,fn c,d,e,f)
+  over_4 fn (a,b,c,d,e,f) = (a,b,c,fn d,e,f)
+  set_1 v = over_1 (const v)
+  set_2 v = over_2 (const v)
+  set_3 v = over_3 (const v)
+  set_4 v = over_4 (const v)

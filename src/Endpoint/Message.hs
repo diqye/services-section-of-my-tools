@@ -174,6 +174,8 @@ listenClient channel conn clientId@(chatName',clientName) = do
             $ Chat.set_sender clientName
             $ msg
       writeChan channel sMsg
+    (Just (Chat.CPing text)) -> do
+      W.sendTextData conn $ A.encode $ Chat.CPing text
     _ -> W.sendTextData conn $ A.encode Chat.CIllegeData
 
 listenBroadcast channel conn clientId@(chatName',_) = do

@@ -17,27 +17,28 @@ data ChatInfo = ChatInfo
   } deriving (Show,Eq,Generic)
 
 data ChatMessage = ChatMessage
-  { content :: Text
-  , sender :: Text
-  , time :: Integer
+  { content :: !Text
+  , sender :: !Text
+  , time :: !Integer
   } deriving (Show,Eq,Generic)
 
 -- (chatName,sender)
 type ClientId = (Text,Text)
 
-data SystemMessage = Offline ClientId Text
-  | Online ClientId
-  | Illege ClientId
-  | InitialInfo ClientId ChatInfo
-  | Ping ClientId
-  | Send Text ChatMessage
+data SystemMessage = Offline !ClientId !Text
+  | Online !ClientId
+  | Illege !ClientId
+  | InitialInfo !ClientId !ChatInfo
+  | Ping !ClientId
+  | Send !Text !ChatMessage
   deriving (Show,Generic)
 
-data ClientMessage = CMessage ChatMessage
-  | COffLine ClientId Text
-  | COnline ClientId 
-  | CInitialInfo ChatInfo
+data ClientMessage = CMessage !ChatMessage
+  | COffLine !ClientId !Text
+  | COnline !ClientId 
+  | CInitialInfo !ChatInfo
   | CIllegeData
+  | CPing !Text
   deriving (Show,Generic)
 
 instance A.ToJSON ClientMessage

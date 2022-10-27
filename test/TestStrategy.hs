@@ -1,0 +1,3 @@
+
+testStrategy = do
+  putStrLn "hello"
