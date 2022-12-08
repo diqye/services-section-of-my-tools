@@ -15,6 +15,7 @@ import Text.Printf(printf)
 import Data.List(find)
 import Data.String.Conversions(cs)
 import Data.Bits (shift, (.|.))
+import qualified I.Candle as C
 
 type Quotas = M.HashMap Text (Float,Float)
 data ClientMessage = Init !Quotas
@@ -40,7 +41,8 @@ data MessageServer = SVerify !Token
   | SDelQuotaEvent !Word8
   | SOpenOrder !OrderOpened --Head监听
   | SSendOpenOrder !OrderOpened --会话监听
-  | SDelOrder !Word8
+  | SDelOrder !Word8 !Text
+  | SCandle !Text !C.PIFifthData
   deriving (Show,Eq)
 
 type Message = (UUID,MessageServer)

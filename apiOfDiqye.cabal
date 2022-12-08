@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f1ad13d74cbaf77d1b2125350e2a61e2de1c0deec7185c70bcc1443b6eb39669
+-- hash: 48a65f6c1a427b8b66cba928378a65e50f53c71aa752cf1aff82a826e7759802
 
 name:           apiOfDiqye
 version:        0.1.0.0
@@ -29,9 +29,11 @@ library
       Endpoint.Finance.Input
       Endpoint.Message
       Endpoint.Static.MyFile
-      Finance.Candle
+      Finance.TestBack
+      I.Candle
       I.ChatInfo
       I.FinanceMessage
+      I.Strategies
       Kit
       Module.FreeJSON
       Module.Log
@@ -129,7 +131,7 @@ test-suite apiOfDiqye-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      TestStrategy
+      MyTest
       Paths_apiOfDiqye
   hs-source-dirs:
       test

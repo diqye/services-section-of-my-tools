@@ -24,8 +24,8 @@ getField text value =  case value of
   (A.Object o) -> do
     let val = HMap.lookup text o
     case val of (Just val') -> getValue val'
-                Nothing -> throwE ["To haven't this filed" <> cs text]
-  _ -> throwE ["To except an Object but it is not on getField method and it will get " <>cs text <> " field"]
+                Nothing -> throwE ["the key " <> cs text <> " doesn't exist."]
+  _ -> throwE ["To except an Object with a key  " <>cs text <> " but it is not a Object"]
 
 getValue ::(A.FromJSON a,Monad m) => A.Value -> ExceptT [String] m a
 getValue val = case A.fromJSON val of

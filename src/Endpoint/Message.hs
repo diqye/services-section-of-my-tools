@@ -150,10 +150,8 @@ channelApp = do
         -- Ping/30s,浏览器Websocket会自动回应Pong消息，客户端无需code
         W.withPingThread conn 30 heart $ do
           let controlException (W.CloseRequest code reson) = do
-                -- $trace' $ show ("CloseRequest",code,reson) 
                 writeChan channel $ Chat.Offline clientId "CloseRequest Exception"
               controlException W.ConnectionClosed = do
-                -- $trace' "ConnectionClosed"
                 writeChan channel $ Chat.Offline clientId "ConnectionClosed"
               controlException e = do
                 $err' $ show e

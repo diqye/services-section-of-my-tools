@@ -33,6 +33,10 @@ import Data.String.Conversions(cs)
 import qualified I.FinanceMessage as A
 import Control.Monad.Trans.Except (runExceptT,ExceptT(ExceptT), throwE)
 import Data.List(intercalate)
+import Data.List
+import I.Strategies (closeOrder)
+import qualified I.Strategies as S
+import Data.Default.Class (Default(..))
 
 headquarters :: Chan IF.Message -> IO ()
 headquarters channel = do
@@ -103,16 +107,30 @@ messageHandle (uuid,IF.SOpenOrder order) chan (ref,eRef) = do
         writeChan chan (uuid,IF.SSendOpenOrder newOrder)
         async $ remidAction $ IF.remidOrderOpening newOrder
         pure ()
-
   if _1 order == piFlag then piFifth else do
     let id = getId (<piFlag) 0
     let newOrder = set_1 id order
     writeEvents eRef $ (events,newOrder:orders)
     writeChan chan (uuid,IF.SSendOpenOrder newOrder)
-messageHandle (uuid,IF.SDelOrder id) chan (ref,eRef) = do
+messageHandle (uuid,IF.SCandle code fivedata) chan (ref,eRef) = do
   (events,orders) <- readIORef eRef
-  let newOrders = filter ((/=id)._1) orders
-  writeEvents eRef $ (events,newOrders)
+  let openedOrders = filter (\a->_2 a == code && _1 a > 100) orders
+  let actions = S.piFifth code def fivedata openedOrders
+  forM_ actions $ \action -> case action of
+    S.Close id -> writeChan chan (uuid,IF.SDelOrder id "π-fifth")
+    S.Open order -> writeChan chan (uuid,IF.SOpenOrder order)
+messageHandle (uuid,IF.SDelOrder id author) chan (ref,eRef) = do
+  (events,orders) <- readIORef eRef
+  let (newOrders,oldOrders) = partition ((/=id)._1) orders
+  when (not $ null oldOrders) $ do
+    quotas <- readIORef ref
+    let oldOrder:_ = oldOrders
+    let price = M.lookup (_2 oldOrder) quotas
+    when (author /= "me") $ do
+      let str = S.closeOrder oldOrder (maybe 0 fst price) author
+      async $ remidAction str
+      pure ()
+    writeEvents eRef $ (events,newOrders)
 
 messageHandle _ _ _ = pure ()
 
@@ -136,7 +154,7 @@ triggerRemid uuid quotas chan eRef = do
     guard $ isStop || isTarget
     let profit = if dir == IF.Grow then price - open else open - price
     liftIO  $ do
-      writeChan chan (uuid,IF.SDelOrder id)
+      writeChan chan (uuid,IF.SDelOrder id "me")
       async $ remidAction $ IF.remidOrder dir code open isTarget price profit
       pure ()
 
@@ -197,7 +215,7 @@ liveData = do
       W.sendBinaryData conn $ IF.encodeEvents [(id,code,price,IF.Grow)]
     listenOther uuid conn (uuid',IF.SSendOpenOrder order) = do
       W.sendBinaryData conn $ IF.encodeOrderOpened [order]
-    listenOther uuid conn (uuid',IF.SDelOrder id) = do
+    listenOther uuid conn (uuid',IF.SDelOrder id _) = do
       W.sendBinaryData conn $ BL.pack [201,id]
     listenOther uuid conn _ = pure ()
 
@@ -235,7 +253,7 @@ liveData = do
       pure $ IF.SNewQuotaEvent code price
     parseTDelOrder val = do
       id <- FJ.getField "id" val
-      pure $ IF.SDelOrder id
+      pure $ IF.SDelOrder id "me"
     parseTDel val = do
       id <- FJ.getField "id" val
       pure $ IF.SDelQuotaEvent id
@@ -244,13 +262,21 @@ liveData = do
       bs <- W.receiveData conn
       let firstT = parseExpectPushQuota uuid chan bs
       let secondT = parseExpectPushOrder uuid chan bs
-      either <- runExceptT $ (firstT <|> secondT)
+      let h1Candles = parseExpectPushH1Candles uuid chan bs
+      either <- runExceptT $ (firstT <|> h1Candles <|> secondT)
       case either of (Left errs) -> $info' $ intercalate "," errs
                      (Right ()) -> pure ()
       pure ()
       where parseExpectPushQuota uuid chan bs = do
               quotas <- FJ.decodeJSON bs
               liftIO $ writeChan chan $ (uuid,IF.SNewTicks quotas)
+            parseExpectPushH1Candles uui chan bs = do
+              val <- FJ.decodeJSON bs
+              candles <- FJ.getField "candles" val
+              code <- FJ.getField "code" val
+              when (length candles >= 5 && code == "XAUUSD") $ do
+                let [a,b,c,d,e] = drop (length candles - 5) candles
+                liftIO $ writeChan chan (uuid,IF.SCandle code (a,b,c,d,e))
             parseExpectPushOrder uuid chan bs = do
               val <- FJ.decodeJSON bs
               dir <- FJ.getField "dir" val

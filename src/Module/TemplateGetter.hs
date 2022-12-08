@@ -29,7 +29,8 @@ mkFromCons _ = pure []
 -- | data Foo t = Foo {a::Int,b::String,c::t}
 -- foo = Foo {a=1,b="b",c=8}
 -- you will get 
--- s_a v rec@(Foo xx) = rec {a=v}
+-- set_a v rec@(Foo xx) = rec {a=v}
+-- over_
 mkFromVarBangType :: VarBangType -> Q [Dec]
 mkFromVarBangType var@(name,bang,typ) = do
   let setterName = mkName $ "set_" ++ nameBase name

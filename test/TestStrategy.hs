@@ -1,3 +1,0 @@
-
-testStrategy = do
-  putStrLn "hello"

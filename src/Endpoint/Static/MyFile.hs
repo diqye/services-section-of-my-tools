@@ -12,16 +12,26 @@ import Module.TemplateGetter
 import Control.Monad(guard)
 import System.IO.Unsafe(unsafePerformIO)
 import System.Directory(getHomeDirectory)
+import Control.Monad.IO.Class (MonadIO(liftIO))
 
 -- 静态文件服务
 -- 于文件，见 private 则 auth 之
 -- 于目录，以json求之，以JSON返回, 默认求之，以HTML返回
 myFiles :: W.AppIO
 myFiles = authLogic
+  <|> authClass
   <|> Static.dirServe shareFolder []
   <|> jsonBrowse
   <|> myBrowse
 
+authClass = do
+  req <- W.getRequest
+  let rawPath = W.rawPathInfo req
+  let needed = not $ B.null $ snd $ B.breakSubstring "authclass" rawPath
+  guard $ needed
+  val <- Static.authBasicValue
+  guard $ val /= Just ("G22","G22authclass")
+  Static.authBasic
 --  静态文件服务文件夹，绝对路径 
 shareFolder = unsafePerformIO $ do
   home <- getHomeDirectory
