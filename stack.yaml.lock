@@ -5,26 +5,27 @@
 
 packages:
 - completed:
+    commit: ace685bf339863ab2575f10e54a086fd8945499e
+    git: https://github.com/diqye/appm.git
     name: appm
-    version: 0.1.0.0
-    git: https://github.com/diqye/appm.git
     pantry-tree:
-      size: 1392
       sha256: a3e535c87fc6e886d246eb9bd542dc834020fc5c371067052a50c2655cda6477
-    commit: ace685bf339863ab2575f10e54a086fd8945499e
+      size: 1392
+    version: 0.1.0.0
   original:
-    git: https://github.com/diqye/appm.git
     commit: ace685bf339863ab2575f10e54a086fd8945499e
+    git: https://github.com/diqye/appm.git
 - completed:
     hackage: HDBC-sqlite3-2.3.3.1@sha256:5025fd94d02b9b3f0b8b8233796dd9a85a0b3dda6503c6e671e3eddbc51cb4d4,2424
     pantry-tree:
-      size: 1427
       sha256: 76e71f73502350ed3fe5fc64604a21a3c8027d49fe6846183d53dbdaf583437a
+      size: 1427
   original:
     hackage: HDBC-sqlite3-2.3.3.1
 snapshots:
 - completed:
-    size: 533252
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/26.yaml
-    sha256: cdbc5db9c1afe80a5998247939027a0c7db92fa0f20b5cd01596ec3da628b622
-  original: lts-16.26
+    sha256: b37c0abab16c7de352c45b85f8ecc8530b084209a2c42987a96c92b4a5e3cd65
+    size: 648924
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/13.yaml
+  original:
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/13.yaml

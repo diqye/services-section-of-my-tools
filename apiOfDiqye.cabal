@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 48a65f6c1a427b8b66cba928378a65e50f53c71aa752cf1aff82a826e7759802
+-- hash: e3fecdb7eda2132ff2b1f56cf3e55f68594264d558dd2a398e7f1beaed317b1a
 
 name:           apiOfDiqye
 version:        0.1.0.0
@@ -131,6 +131,7 @@ test-suite apiOfDiqye-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ChatInfoTest
       MyTest
       Paths_apiOfDiqye
   hs-source-dirs:

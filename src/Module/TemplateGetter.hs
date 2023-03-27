@@ -6,6 +6,7 @@ module Module.TemplateGetter where
 import Language.Haskell.TH.Syntax(VarBangType)
 import Language.Haskell.TH
 import Control.Monad(mapM)
+import Debug.Trace
   
 
 mkSetAndOver :: Name -> Q [Dec]
@@ -22,7 +23,7 @@ mkFromInfo _ = do
 
 mkFromCons :: Con -> Q [Dec]
 mkFromCons (RecC dataConName varBangs) = do
-  decss <- mapM mkFromVarBangType varBangs
+  decss <- mapM (mkFromVarBangType dataConName) varBangs
   pure $ concat decss
 mkFromCons _ = pure []
 
@@ -31,22 +32,35 @@ mkFromCons _ = pure []
 -- you will get 
 -- set_a v rec@(Foo xx) = rec {a=v}
 -- over_
-mkFromVarBangType :: VarBangType -> Q [Dec]
-mkFromVarBangType var@(name,bang,typ) = do
+mkFromVarBangType :: Name -> VarBangType -> Q [Dec]
+mkFromVarBangType constructName var@(name,bang,typ) = do
   let setterName = mkName $ "set_" ++ nameBase name
   let overName = mkName $ "over_" ++ nameBase name
   v <- newName "v"
   fn <- newName "fn"
   foo <- newName "foo"
+  pure
+    [ FunD setterName
+        [ Clause
+            [VarP v,AsP foo (RecP constructName [(name,WildP)])] 
+            (NormalB (RecUpdE (VarE foo) [(name,VarE v)]))
+            []
+        , Clause [VarP v,VarP foo]
+            (NormalB (VarE foo))
+            []
+        ]
+    , FunD overName
+        [ Clause
+            [VarP fn,AsP foo (RecP constructName [(name,WildP)])] 
+            (NormalB (RecUpdE (VarE foo) [(name,(AppE (VarE fn) (AppE (VarE name) (VarE foo))))]))
+            []
+        , Clause
+            [VarP fn,VarP foo]
+            (NormalB (VarE foo))
+            []
+        ]
+    ]
 
-  pure [FunD setterName
-    [Clause [VarP v,VarP foo]
-      (NormalB (RecUpdE (VarE foo) [(name,VarE v)]))
-      []]
-    ,FunD overName
-      [Clause [VarP fn,VarP foo]
-        (NormalB (RecUpdE (VarE foo) [(name,(AppE (VarE fn) (AppE (VarE name) (VarE foo))))]))
-        []]]
 
 -- t1 (a,b) = a
 -- set_t1 v = over_t1 (const v)

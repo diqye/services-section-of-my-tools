@@ -22,7 +22,7 @@ import Control.Exception(catch,SomeException,try)
 import qualified Endpoint.Message as EM
 import qualified Endpoint.Finance.Input as FI
 
-version = "Version 1.0"
+version = "Version 2.0"
 port = 8899
 
 main :: IO ()

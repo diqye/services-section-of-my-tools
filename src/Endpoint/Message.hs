@@ -97,13 +97,17 @@ chatHeadquarters chatChannel = do
       (Chat.Send chatName message) -> do
         chatInfos <- readIORef chatInfosRef
         r <- modifyOrCreateChat chatName chatInfos $ \ info -> do
-          pure $ Chat.over_recentMessages (take 100 . (message:)) info
+          let receiver = Chat.getReceiver message
+          if receiver == Nothing then do
+            pure $ Chat.over_recentMessages (take 100 . (message:)) info
+          else do 
+            pure info
         writeIORef chatInfosRef r
       (Chat.Offline (chatName,id) reson) -> do
         chatInfos <- readIORef chatInfosRef
         let ignore (id',_) =  id' /= id
         r <- modifyOrCreateChat chatName chatInfos $ \ info -> do
-          pure $ Chat.over_onlineMember (filter ignore) info
+          pure $ Chat.over_onlineMember (filter ignore) $ info
         writeIORef chatInfosRef r
       _ -> pure ()
 
@@ -170,13 +174,14 @@ listenClient channel conn clientId@(chatName',clientName) = do
       let sMsg = Chat.Send chatName'
             $ Chat.set_time timestamp
             $ Chat.set_sender clientName
+            $ Chat.set_c_sender clientName
             $ msg
       writeChan channel sMsg
     (Just (Chat.CPing text)) -> do
       W.sendTextData conn $ A.encode $ Chat.CPing text
     _ -> W.sendTextData conn $ A.encode Chat.CIllegeData
 
-listenBroadcast channel conn clientId@(chatName',_) = do
+listenBroadcast channel conn clientId@(chatName',clientName) = do
   message <- readChan channel
   case message of 
     Chat.Offline id@(name,_) text | name == chatName' -> do
@@ -184,7 +189,13 @@ listenBroadcast channel conn clientId@(chatName',_) = do
     Chat.InitialInfo id@(name,_) _ | name == chatName' -> do
       W.sendTextData conn $ A.encode $ Chat.COnline id
     Chat.Send chatName chatMessage | chatName == chatName' -> do
-      W.sendTextData conn $ A.encode $ Chat.CMessage chatMessage
+      let receiver = Chat.getReceiver chatMessage
+      if receiver == Nothing then do
+        W.sendTextData conn $ A.encode $ Chat.CMessage chatMessage
+      else if receiver == Just clientName then do 
+        W.sendTextData conn $ A.encode $ Chat.CMessage chatMessage
+      else do 
+        pure ()
     _ -> pure ()
 
 -- 内存中以心跳方式维护client在线情况

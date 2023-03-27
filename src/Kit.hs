@@ -60,3 +60,7 @@ getInnerState :: Monad m => W.AppT (W.StateT s m) s
 getInnerState = W.lift $ W.lift $ W.get
 
 
+overwriteOrCons :: Eq key => key -> a -> (a -> a) -> [(key,a)] -> [(key,a)]
+overwriteOrCons key defaultA modify xs = case lookup key xs of
+  Nothing -> (key,modify defaultA):xs
+  Just a -> map (\(key',a')->if key' == key then (key',modify a') else (key', a')) xs

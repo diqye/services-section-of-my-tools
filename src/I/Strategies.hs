@@ -14,7 +14,6 @@ import Control.Monad (guard, forM_, when, replicateM_)
 import Control.Monad.Trans.Writer (execWriter, tell)
 import qualified Data.Data as IF
 import Debug.Trace (trace, traceM, traceShow)
-import System.Random (Random(randomIO, randomRIO))
 import Web.AppM (replicateM)
 import Control.Monad (forM)
 import qualified Data.Aeson as A
@@ -46,7 +45,7 @@ piFifth code conf fiveCandle holdOrders = result where
   pi = seq () $ piFifthValue fiveCandle conf
   d2f = fromRational . toRational
   bought = execWriter $ do
-    let stop = foldl1 min $ map (C.low.($fiveCandle)) [_2,_3,_4]
+    let stop = foldl1 min $ map (C.low.($ fiveCandle)) [_2,_3,_4]
     let open = C.close (_5 fiveCandle)
     tell' $ Open (100,code,IF.Grow,d2f open,d2f stop,d2f (open + (open-stop)*ratio conf))
     forM_ holdOrders $ \ order -> do
@@ -54,7 +53,7 @@ piFifth code conf fiveCandle holdOrders = result where
         tell' $ Close $ _1 order
       else pure ()
   sold = execWriter $ do
-    let stop = foldl1 max $ map (C.high.($fiveCandle)) [_2,_3,_4]
+    let stop = foldl1 max $ map (C.high.($ fiveCandle)) [_2,_3,_4]
     let open = C.close (_5 fiveCandle)
     tell' $ Open (100,code,IF.Shrink,d2f open,d2f stop,d2f (open - (stop-open)*ratio conf))
     forM_ holdOrders $ \ order -> do
@@ -86,13 +85,13 @@ piFifthValue (a,b,c,d,e) config = maybe 0 id (bought <|> sold) where
   (ha,hb,hc,hd,he) = (C.high a,C.high b,C.high c,C.high d,C.high e)
   low_avg = (la + lb + lc + ld + le) / 5
   low_rates = (rate la low_avg,rate lb low_avg,rate lc low_avg,rate ld low_avg,rate le low_avg)
-  min_low_rate = foldl1 min $ map ($low_rates) [_2,_3,_4]
+  min_low_rate = foldl1 min $ map ($ low_rates) [_2,_3,_4]
   first_low_rate_diff = _1 low_rates - min_low_rate
   last_low_rate_diff = _5 low_rates - min_low_rate
   rate a avg = (a / avg - 1) * 100
   high_avg = (ha + hb + hc + hd + he) / 5
   high_rates = (rate ha high_avg,rate hb high_avg,rate hc high_avg,rate hd high_avg,rate he high_avg)
-  max_high_rate = foldl1 max $ map ($high_rates) [_2,_3,_4]
+  max_high_rate = foldl1 max $ map ($ high_rates) [_2,_3,_4]
   first_high_rate_diff = max_high_rate -  _1 high_rates
   last_high_rate_diff = max_high_rate -  _5 high_rates
 
