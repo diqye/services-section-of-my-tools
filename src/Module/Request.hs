@@ -61,6 +61,9 @@ bjson value req = req {HTTP.requestBody = HTTP.RequestBodyLBS $ A.encode value}
 bhUtf8json :: A.ToJSON a => a -> HTTP.Request -> HTTP.Request
 bhUtf8json a = bjson a . hUtf8json
 
+bjson8 :: A.ToJSON a => a -> HTTP.Request -> HTTP.Request
+bjson8 = bhUtf8json
+
 httpAction :: MonadIO m => HTTP.Request -> m (T.Status,ByteString)
 httpAction req = do
   resp <- liftIO $ do 
@@ -71,3 +74,4 @@ httpAction req = do
 httpActionBody req = do
   (_,r) <- httpAction req
   pure r
+
